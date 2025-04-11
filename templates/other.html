@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InventorySync - Business Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Add new chatbot CSS -->
+    <link rel="stylesheet" href="/static/css/chatbot.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="#"><i class="fas fa-sync-alt me-2"></i> InventorySync</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#upload" data-section="upload">Upload</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#data-preview" data-section="data-preview">Data
+                            Preview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#visualizations"
+                            data-section="visualizations">Insights</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#chatbot" data-section="chatbot">Chatbot</a></li>
+                </ul>
+                <div class="navbar-nav ms-auto align-items-center">
+                    <button id="theme-toggle" class="btn btn-outline-light me-3"><i class="fas fa-moon"></i></button>
+                    <span id="status-indicator" class="status-offline"><i class="fas fa-circle me-1"></i><span
+                            id="connection-status">Checking...</span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4 px-4">
+        <div id="content">
+            <!-- Upload Section -->
+            <section id="upload" class="section active">
+                <!-- Your existing upload section content remains unchanged -->
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card neumorphic">
+                            <div class="card-header">
+                                <h5><i class="fas fa-upload me-2"></i>Data Upload</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="upload-form" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="file" class="form-label">Excel File</label>
+                                        <input type="file" class="form-control" id="file" name="file"
+                                            accept=".xlsx, .xls" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="date" class="form-label">Date</label>
+                                        <input type="date" class="form-control" id="date" name="date" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100" id="upload-btn"><i
+                                            class="fas fa-upload me-2"></i>Process</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card neumorphic mt-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-info-circle me-2"></i>Processing Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="upload-status" class="upload-status">
+                                    <div class="status-step" id="step-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span>Uploading File to Server</span>
+                                        <div class="step-indicator"></div>
+                                    </div>
+                                    <div class="status-step" id="step-process">
+                                        <i class="fas fa-cogs"></i>
+                                        <span>Processing Data</span>
+                                        <div class="step-indicator"></div>
+                                    </div>
+                                    <div class="status-step" id="step-db">
+                                        <i class="fas fa-database"></i>
+                                        <span>Updating Database</span>
+                                        <div class="step-indicator"></div>
+                                    </div>
+                                    <div class="status-step" id="step-report">
+                                        <i class="fas fa-file-alt"></i>
+                                        <span>Generating Report</span>
+                                        <div class="step-indicator"></div>
+                                    </div>
+                                    <div id="status-message" class="status-message d-none"></div>
+                                </div>
+                                <div id="result-summary" class="d-none mt-4">
+                                    <h6 class="mb-3">Processing Results</h6>
+                                    <div class="row g-3 result-grid">
+                                        <div class="col-6"><span class="result-label">Date:</span> <span
+                                                id="result-date">-</span></div>
+                                        <div class="col-6"><span class="result-label">Records:</span> <span
+                                                id="result-records">-</span></div>
+                                        <div class="col-6"><span class="result-label">New:</span> <span
+                                                id="result-new">-</span></div>
+                                        <div class="col-6"><span class="result-label">Updated:</span> <span
+                                                id="result-updated">-</span></div>
+                                        <div class="col-6"><span class="result-label">Sales:</span> <span
+                                                id="result-daily-sales">-</span></div>
+                                        <div class="col-6"><span class="result-label">Purchases:</span> <span
+                                                id="result-daily-purchases">-</span></div>
+                                        <div class="col-12"><button id="download-btn"
+                                                class="btn btn-outline-primary w-100" disabled>Download Processed
+                                                File</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card neumorphic h-100">
+                            <div class="card-header">
+                                <h5><i class="fas fa-terminal me-2"></i>Activity Log <button id="clear-logs"
+                                        class="btn btn-sm btn-outline-light"><i class="fas fa-eraser"></i></button></h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="terminal" id="log-container"></div>
+                                <div id="terminal-loader" class="terminal-loader d-none">
+                                    <div class="spinner-border text-accent" role="status"><span
+                                            class="visually-hidden">Loading...</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Preview Section -->
+            <section id="data-preview" class="section">
+                <!-- Your existing data preview section content remains unchanged -->
+                <div class="card neumorphic">
+                    <div class="card-header">
+                        <h5><i class="fas fa-table me-2"></i>Data Overview</h5>
+                        <div>
+                            <button id="refresh-preview" class="btn btn-sm btn-outline-light me-2"><i
+                                    class="fas fa-sync-alt"></i></button>
+                            <button id="export-data" class="btn btn-sm btn-outline-light"><i
+                                    class="fas fa-file-export"></i> Export</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-metrics mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="metric-card"><i class="fas fa-database"></i>
+                                        <div>
+                                            <div id="metric-total-records">0</div>
+                                            <div>Records</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card"><i class="fas fa-tags"></i>
+                                        <div>
+                                            <div id="metric-unique-brands">0</div>
+                                            <div>Brands</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card"><i class="fas fa-th-list"></i>
+                                        <div>
+                                            <div id="metric-unique-categories">0</div>
+                                            <div>Categories</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card"><i class="fas fa-chart-pie"></i>
+                                        <div>
+                                            <div id="metric-ratio">0%</div>
+                                            <div>Sales/Purchase</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="data-table" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Brand</th>
+                                        <th>Category</th>
+                                        <th>Size</th>
+                                        <th>MRP</th>
+                                        <th>Color</th>
+                                        <th>Sales</th>
+                                        <th>Purchases</th>
+                                        <th>Week</th>
+                                        <th>Month</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table-body">
+                                    <tr>
+                                        <td colspan="10" class="text-center">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Visualizations Section -->
+            <section id="visualizations" class="section">
+                <!-- Your existing visualizations section content remains unchanged -->
+                <div class="card neumorphic mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-filter me-2"></i>Filter Insights</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="date-filter-form" class="row g-3 align-items-end">
+                            <div class="col-md-5"><label for="start-date">Start Date</label><input type="date"
+                                    class="form-control" id="start-date"></div>
+                            <div class="col-md-5"><label for="end-date">End Date</label><input type="date"
+                                    class="form-control" id="end-date"></div>
+                            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Apply</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card neumorphic">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-bar"></i> Top Brands</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="brand-chart" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card neumorphic">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-bar"></i> Top Categories</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="category-chart" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card neumorphic">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-line"></i> Monthly Trends</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="monthly-chart" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card neumorphic">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-line"></i> Weekly Trends</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="weekly-chart" class="chart-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chatbot Section -->
+            <section id="chatbot" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-comments me-2"></i>Assistant</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="chat-container">
+                            <div class="chat-messages" id="chatMessages"></div>
+                            <div class="chat-input-container">
+                                <input type="text" id="messageInput" placeholder="Ask about your inventory..."
+                                    aria-label="Type your message">
+                                <button id="sendButton" class="btn">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span class="d-none d-md-inline">Send</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/script.js"></script>
+    <!-- Add new chatbot JS -->
+    <script src="/static/js/chatbot.js"></script>
+</body>
+
+</html>
